@@ -11,7 +11,6 @@ IO_LOC "led[0]" 16;
 IO_LOC "led[1]" 17;
 IO_LOC "led[2]" 18;
 //IO_LOC "green" 38
-IO_LOC "blue" 41
 IO_LOC "speaker" 38
 //IO_LOC "btn1" 14
 //IO_LOC "btn2" 15

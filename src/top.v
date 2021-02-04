@@ -1,7 +1,8 @@
 //a metronome
 module top(
 	input sys_clk, //onboard clock
-    input sys_rst_n, // reset input
+    input button_b_n, 
+    input button_a_n,
 	output reg speaker,
     output reg [2:0] led
 );
@@ -9,8 +10,9 @@ module top(
 
 //TODO a toggle between 100, 115
 
-reg [23:0] counter;
+reg [24:0] counter;
 reg [0:1] tick;
+reg [7:0] bpm;
 
 parameter FREQ = 24000000;
 parameter BPM = 90;
@@ -18,15 +20,43 @@ parameter BPM_DELAY = FREQ/BPM*60;
 parameter BEEP_LENGTH_MS = 60;
 //TODO parametrize delay as well
 //parameter BEEP_DELAY = FREQ / (1/(BEEP_LENGTH_MS/1000));
-parameter BEEP_DELAY = 50_000;
+parameter BEEP_DELAY = 60_000;
 
-always @(posedge sys_clk or negedge sys_rst_n) begin
-    if(!sys_rst_n) begin
-        speaker <= 1'b1;
-        counter <= 24'd0;
-        tick <= 1'b0;
-    end   
-    else if(counter == BPM_DELAY) begin
+reg speed = 1'b0;
+
+wire button_a_pressed;
+wire button_b_pressed;
+
+button_synchronizer synchronizer_a(
+    .clk(sys_clk),
+    .in(~button_a_n), 
+    .out(button_sync)
+);
+
+button_debouncer debouncer_a(
+    .clk(sys_clk),
+    .button(button_sync), //active-high synchronized noisy button input
+    .button_state(button_state),
+    .button_event(button_event),
+    .button_pressed(button_a_pressed),
+    .button_released(button_released)
+);
+
+initial begin
+    speaker <= 1'b1;
+    counter <= 24'd0;
+    tick <= 1'b0;
+    bpm <= 90;
+end
+
+always @(posedge sys_clk) begin
+    if(button_a_pressed) begin
+        speed = ~speed;
+    end
+end
+
+always @(posedge sys_clk) begin    
+    if((~speed && counter == 20_000_000) || (speed && counter == 12_000_000)) begin
         speaker <= 1'b0;
         case(tick)
             2'b00: led <= 3'b011;

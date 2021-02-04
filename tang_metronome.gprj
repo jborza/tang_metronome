@@ -7,6 +7,7 @@
     <FileList>
         <File path="src/button_debouncer.v" type="file.verilog" enable="1"/>
         <File path="src/button_synchronizer.v" type="file.verilog" enable="1"/>
+        <File path="src/speed_generator.v" type="file.verilog" enable="1"/>
         <File path="src/top.v" type="file.verilog" enable="1"/>
         <File path="src/tang_metronome.cst" type="file.cst" enable="1"/>
     </FileList>

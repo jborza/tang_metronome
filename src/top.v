@@ -7,12 +7,8 @@ module top(
     output reg [2:0] led
 );
 
-
-//TODO a toggle between 100, 115
-
-reg [24:0] counter;
+reg [25:0] counter;
 reg [0:1] tick;
-reg [7:0] bpm;
 
 parameter FREQ = 24000000;
 parameter BPM = 90;
@@ -22,41 +18,66 @@ parameter BEEP_LENGTH_MS = 60;
 //parameter BEEP_DELAY = FREQ / (1/(BEEP_LENGTH_MS/1000));
 parameter BEEP_DELAY = 60_000;
 
-reg speed = 1'b0;
+reg [3:0] speed;
+wire [25:0] bpm_ticks;
 
 wire button_a_pressed;
 wire button_b_pressed;
+wire button_a_sync;
+wire button_b_sync;
 
 button_synchronizer synchronizer_a(
     .clk(sys_clk),
     .in(~button_a_n), 
-    .out(button_sync)
+    .out(button_a_sync)
 );
 
 button_debouncer debouncer_a(
     .clk(sys_clk),
-    .button(button_sync), //active-high synchronized noisy button input
-    .button_state(button_state),
-    .button_event(button_event),
+    .button(button_a_sync), //active-high synchronized noisy button input
+    .button_state(button_a_state),
+    .button_event(),
     .button_pressed(button_a_pressed),
-    .button_released(button_released)
+    .button_released()
+);
+
+button_synchronizer synchronizer_b(
+    .clk(sys_clk),
+    .in(~button_b_n), 
+    .out(button_b_sync)
+);
+
+button_debouncer debouncer_b(
+    .clk(sys_clk),
+    .button(button_b_sync), //active-high synchronized noisy button input
+    .button_state(button_b_state),
+    .button_event(),
+    .button_pressed(button_b_pressed),
+    .button_released()
+);
+
+speed_generator generator(
+    .speed(speed),
+    .bpm_ticks(bpm_ticks)
 );
 
 initial begin
     speaker <= 1'b1;
-    counter <= 24'd0;
+    counter <= 26'd0;
     tick <= 1'b0;
-    bpm <= 90;
+    speed = 4'h1;
 end
 
 always @(posedge sys_clk) begin
     if(button_a_pressed) begin
-        speed = ~speed;
+        speed = speed - 1;
+    end else if(button_b_pressed) begin
+        speed = speed + 1;
     end
 end
 
 always @(posedge sys_clk) begin    
-    if((~speed && counter == 20_000_000) || (speed && counter == 12_000_000)) begin
+    if(counter == bpm_ticks) begin
         speaker <= 1'b0;
         case(tick)
             2'b00: led <= 3'b011;
